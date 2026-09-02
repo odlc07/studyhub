@@ -431,11 +431,11 @@ function render(){
         '<div class="top"><div class="name">'+esc(s.name)+'</div>'+
           '<span class="badge '+st[0]+'">'+st[1]+'</span></div>'+
         '<div class="row between" style="margin-top:8px;align-items:flex-end">'+
-          '<div><div class="big" style="color:'+st[2]+'">'+Math.max(0,t.left)+'</div>'+
+          '<div><div class="big" style="color:'+(t.left>0?'var(--ok)':'var(--bad)')+'">'+Math.max(0,t.left)+'</div>'+
             '<div class="tiny muted">aula'+(t.left===1?'':'s')+' que ainda pode perder</div></div>'+
           '<button class="mini" onclick="openAbsence(\''+s.id+'\')">+ falta</button>'+
         '</div>'+
-        '<div class="bar"><i style="width:'+used+'%;background:'+st[2]+'"></i></div>'+
+        '<div class="bar"><i style="width:'+used+'%;background:var(--bad)"></i></div>'+
         '<div class="stats small">'+
           '<div class="stat"><b>'+t.missed+' / '+t.limit+'</b><span>faltas / limite</span></div>'+
           '<div class="stat"><b>'+t.pctNow+'%</b><span>presença até hoje</span></div>'+
