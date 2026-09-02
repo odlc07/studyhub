@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>StudyHub</title>
+<meta name="description" content="Ferramentas da faculdade">
+<meta name="theme-color" content="#111318">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="StudyHub">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='88'%3E🎓%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#f5f6f8; --card:#ffffff; --ink:#14171c; --muted:#6b727e;
+    --line:#e3e6ea; --accent:#3b6ef5;
+    --shadow:0 1px 2px rgba(16,20,30,.06), 0 6px 18px rgba(16,20,30,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0f1115; --card:#181b21; --ink:#e9ecf1; --muted:#98a0ad;
+      --line:#272c34; --accent:#6d92ff;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.3);
+    }
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:640px;margin:0 auto;padding:calc(34px + env(safe-area-inset-top)) 16px 40px}
+  h1{margin:0;font-size:27px;letter-spacing:-.8px}
+  .sub{color:var(--muted);font-size:13.5px;margin:5px 0 26px}
+
+  a.tool{
+    display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    box-shadow:var(--shadow);padding:16px;margin-bottom:12px;transition:.14s;
+  }
+  a.tool:hover{border-color:var(--accent);transform:translateY(-1px)}
+  a.tool:active{transform:scale(.99)}
+  .ic{
+    width:44px;height:44px;flex:none;border-radius:12px;display:grid;place-items:center;
+    font-size:22px;background:color-mix(in srgb,var(--accent) 12%,transparent);
+  }
+  .tool b{display:block;font-size:15.5px;letter-spacing:-.2px}
+  .tool span{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+  .arrow{margin-left:auto;color:var(--muted);font-size:19px}
+
+  .note{
+    border:1px dashed var(--line);border-radius:16px;padding:16px;
+    color:var(--muted);font-size:12.5px;text-align:center;margin-top:4px;
+  }
+  footer{color:var(--muted);font-size:11.5px;text-align:center;margin-top:30px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>StudyHub</h1>
+  <p class="sub">Ferramentas da faculdade, num lugar só.</p>
+
+  <!-- Para adicionar uma ferramenta: crie a pasta com um index.html
+       e copie um bloco <a class="tool"> apontando para ela. -->
+
+  <a class="tool" href="frequencia/">
+    <div class="ic">📋</div>
+    <div>
+      <b>Frequência</b>
+      <span>Controle de faltas do semestre</span>
+    </div>
+    <div class="arrow">›</div>
+  </a>
+
+  <div class="note">Novas ferramentas aparecem aqui.</div>
+
+  <footer>Dados guardados no seu navegador e no seu Gist.</footer>
+</div>
+</body>
+</html>

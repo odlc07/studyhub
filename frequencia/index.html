@@ -1,0 +1,753 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Frequência</title>
+<meta name="description" content="Controle de faltas do semestre">
+<meta name="theme-color" content="#111318">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Frequência">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='88'%3E📋%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#f5f6f8; --card:#ffffff; --ink:#14171c; --muted:#6b727e;
+    --line:#e3e6ea; --accent:#3b6ef5; --ok:#1f9d5b; --warn:#d98518; --bad:#d63a3a;
+    --shadow:0 1px 2px rgba(16,20,30,.06), 0 6px 18px rgba(16,20,30,.06);
+    --radius:16px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0f1115; --card:#181b21; --ink:#e9ecf1; --muted:#98a0ad;
+      --line:#272c34; --accent:#6d92ff; --ok:#3fbd7c; --warn:#e0a33f; --bad:#ec6a6a;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.3);
+    }
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:calc(76px + env(safe-area-inset-bottom));
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:0 14px}
+  header{
+    position:sticky;top:0;z-index:20;background:var(--bg);
+    padding:calc(14px + env(safe-area-inset-top)) 0 10px;
+    border-bottom:1px solid var(--line);
+  }
+  header h1{margin:0;font-size:19px;letter-spacing:-.3px}
+  header .sub{color:var(--muted);font-size:12.5px;margin-top:2px}
+  main{padding-top:14px}
+  section{display:none}
+  section.on{display:block}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+        box-shadow:var(--shadow);padding:14px;margin-bottom:12px}
+  .card h2{margin:0 0 10px;font-size:15px}
+  .row{display:flex;align-items:center;gap:10px}
+  .between{justify-content:space-between}
+  .muted{color:var(--muted)}
+  .small{font-size:12.5px}
+  .tiny{font-size:11.5px}
+
+  .subj{border-left:5px solid var(--dot,var(--accent))}
+  .subj .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .subj .name{font-weight:650;font-size:15.5px;letter-spacing:-.2px}
+  .badge{font-size:11.5px;font-weight:650;padding:3px 9px;border-radius:999px;white-space:nowrap}
+  .b-ok{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+  .b-warn{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+  .b-bad{background:color-mix(in srgb,var(--bad) 16%,transparent);color:var(--bad)}
+  .big{font-size:26px;font-weight:700;letter-spacing:-1px;line-height:1.1}
+  .bar{height:9px;border-radius:99px;background:var(--line);overflow:hidden;margin:10px 0 7px;display:flex}
+  .bar i{display:block;height:100%}
+  .stats{display:flex;gap:16px;flex-wrap:wrap}
+  .stat b{display:block;font-size:15px;color:var(--ink)}
+  .stat span{font-size:11.5px;color:var(--muted)}
+
+  button,.btn{font:inherit;cursor:pointer;border-radius:11px;border:1px solid var(--line);
+        background:var(--card);color:var(--ink);padding:9px 13px;transition:.12s}
+  button:active{transform:scale(.97)}
+  .primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  .danger{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 35%,var(--line))}
+  .ghost{background:transparent}
+  .mini{padding:6px 10px;font-size:12.5px;border-radius:9px}
+
+  label{display:block;font-size:12.5px;color:var(--muted);margin:10px 0 4px;font-weight:600}
+  input,select,textarea{font:inherit;width:100%;padding:10px 11px;border-radius:11px;
+        border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+  input[type=checkbox]{width:auto}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .days{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-top:6px}
+  .day{border:1px solid var(--line);border-radius:11px;padding:8px;background:var(--bg)}
+  .day.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent)}
+  .day .hd{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600}
+  .day input[type=number]{margin-top:6px;padding:5px 7px;font-size:13px}
+  .day input[type=number][disabled]{opacity:.35}
+
+  .swatches{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .sw{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer}
+  .sw.on{border-color:var(--ink)}
+
+  .item{display:flex;justify-content:space-between;align-items:center;gap:10px;
+        padding:10px 0;border-bottom:1px solid var(--line)}
+  .item:last-child{border-bottom:0}
+  .dot{width:9px;height:9px;border-radius:50%;flex:none}
+
+  nav{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--card);
+      border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom)}
+  nav button{flex:1;border:0;background:none;border-radius:0;padding:9px 2px 10px;
+      color:var(--muted);font-size:10.5px;display:flex;flex-direction:column;align-items:center;gap:3px}
+  nav button.on{color:var(--accent)}
+  nav svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.9;
+      stroke-linecap:round;stroke-linejoin:round}
+
+  .fab{position:fixed;right:16px;bottom:calc(76px + env(safe-area-inset-bottom));z-index:31;
+      background:var(--accent);color:#fff;border:0;border-radius:999px;padding:13px 18px;
+      font-weight:650;box-shadow:0 6px 20px color-mix(in srgb,var(--accent) 45%,transparent)}
+
+  .sheet{position:fixed;inset:0;z-index:50;background:rgba(8,10,14,.5);
+      display:none;align-items:flex-end;justify-content:center}
+  .sheet.on{display:flex}
+  .sheet .panel{background:var(--card);width:100%;max-width:760px;
+      border-radius:20px 20px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom));
+      max-height:88vh;overflow:auto}
+  @media(min-width:760px){.sheet{align-items:center}.sheet .panel{border-radius:20px}}
+  .sheet h3{margin:0 0 4px;font-size:17px}
+  .empty{text-align:center;color:var(--muted);padding:26px 10px;font-size:13.5px}
+  .warnbox{background:color-mix(in srgb,var(--warn) 14%,transparent);color:var(--warn);
+      border-radius:11px;padding:9px 11px;font-size:12.5px;margin-top:10px}
+</style>
+</head>
+<body>
+
+<header><div class="wrap">
+  <div class="row between">
+    <div>
+      <h1>Frequência</h1>
+      <div class="sub" id="semInfo"></div>
+    </div>
+    <div style="text-align:right">
+      <div class="big" id="globalLeft"></div>
+      <div class="tiny" id="syncPill" style="margin-top:2px"></div>
+    </div>
+  </div>
+</div></header>
+
+<main class="wrap">
+
+  <section id="v-painel" class="on">
+    <div id="painel"></div>
+  </section>
+
+  <section id="v-materias">
+    <div class="card">
+      <div class="row between">
+        <h2 style="margin:0">Matérias</h2>
+        <button class="primary mini" onclick="openSubject()">+ Nova</button>
+      </div>
+      <div id="subjList" style="margin-top:8px"></div>
+    </div>
+    <div class="card">
+      <h2>Semestre</h2>
+      <div class="grid2">
+        <div><label for="cStart">Início das aulas</label><input type="date" id="cStart"></div>
+        <div><label for="cEnd">Fim das aulas</label><input type="date" id="cEnd"></div>
+      </div>
+      <label for="cMin">Presença mínima exigida (%)</label>
+      <input type="number" id="cMin" min="1" max="100" step="1">
+      <div class="tiny muted" style="margin-top:6px">Na USP o padrão é 70% — ou seja, você pode faltar até 30% das aulas.</div>
+      <button class="primary" style="margin-top:12px;width:100%" onclick="saveConfig()">Salvar semestre</button>
+    </div>
+    <div class="card">
+      <h2>Feriados / dias sem aula</h2>
+      <div class="row" style="gap:8px">
+        <input type="date" id="hDate">
+        <button class="mini" onclick="addHoliday()">Adicionar</button>
+      </div>
+      <div id="holList" style="margin-top:10px"></div>
+    </div>
+  </section>
+
+  <section id="v-hist">
+    <div class="card">
+      <h2>Faltas registradas</h2>
+      <div id="histList"></div>
+    </div>
+  </section>
+
+  <section id="v-dados">
+    <div class="card">
+      <h2>Sincronizar entre aparelhos</h2>
+      <div id="syncStatus" class="small" style="margin-bottom:10px"></div>
+      <label for="gToken">Token do GitHub (escopo <code>gist</code>)</label>
+      <input type="password" id="gToken" placeholder="ghp_..." autocomplete="off" spellcheck="false">
+      <div class="tiny muted" style="margin-top:5px">
+        <a href="https://github.com/settings/tokens/new?scopes=gist&amp;description=Frequencia" target="_blank" rel="noopener">Gerar um token aqui</a>
+        — já vem com o escopo certo marcado. Escolha validade longa e copie o valor (só aparece uma vez).
+      </div>
+      <label for="gGist">ID do Gist</label>
+      <div class="row" style="gap:8px">
+        <input id="gGist" placeholder="deixe vazio para criar um novo" autocomplete="off" spellcheck="false">
+        <button class="mini" onclick="createGist()">Criar</button>
+      </div>
+      <div class="tiny muted" style="margin-top:5px">
+        No primeiro aparelho, deixe vazio e clique em <b>Criar</b>. Nos outros, cole o mesmo ID.
+      </div>
+      <div class="row" style="gap:8px;margin-top:14px;flex-wrap:wrap">
+        <button class="primary" onclick="saveSync()">Conectar</button>
+        <button onclick="syncNow(true)">Sincronizar agora</button>
+        <button class="danger" onclick="disconnectSync()">Desconectar</button>
+      </div>
+      <div class="tiny muted" style="margin-top:10px">
+        O token fica salvo só neste navegador e nunca sai daqui a não ser para a API do GitHub.
+        Dá para revogar a qualquer momento em Settings → Developer settings → Tokens.
+      </div>
+    </div>
+    <div class="card">
+      <h2>Backup</h2>
+      <p class="small muted" style="margin-top:0">Os dados ficam salvos só neste navegador. Para levar do celular pro PC (ou não perder ao limpar o cache), exporte e importe o arquivo.</p>
+      <div class="row" style="gap:8px;flex-wrap:wrap">
+        <button onclick="exportJSON()">Baixar backup</button>
+        <button onclick="copyJSON()">Copiar</button>
+        <button onclick="document.getElementById('fileIn').click()">Importar arquivo</button>
+      </div>
+      <input type="file" id="fileIn" accept="application/json" hidden>
+      <label for="pasteBox">Ou cole um backup aqui</label>
+      <textarea id="pasteBox" rows="4" placeholder="cole o JSON do backup"></textarea>
+      <button style="margin-top:8px" onclick="importPaste()">Importar do texto</button>
+    </div>
+    <div class="card">
+      <h2>Zona de perigo</h2>
+      <button class="danger" onclick="wipe()">Apagar tudo</button>
+    </div>
+    <p class="tiny muted" style="text-align:center;padding:0 0 10px">
+      Adicione à tela de início do celular para usar como app.
+    </p>
+  </section>
+
+</main>
+
+<button class="fab" onclick="openAbsence()">+ Falta</button>
+
+<nav>
+  <button data-v="painel" class="on" onclick="go('painel')">
+    <svg viewBox="0 0 24 24"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>Painel</button>
+  <button data-v="materias" onclick="go('materias')">
+    <svg viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>Matérias</button>
+  <button data-v="hist" onclick="go('hist')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Histórico</button>
+  <button data-v="dados" onclick="go('dados')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M4.5 12a7.5 7.5 0 0 1 .1-1.2l-2-1.5 2-3.4 2.3 1a7.5 7.5 0 0 1 2-1.2l.4-2.5h3.9l.4 2.5c.7.3 1.4.7 2 1.2l2.3-1 2 3.4-2 1.5a7.5 7.5 0 0 1 0 2.4l2 1.5-2 3.4-2.3-1a7.5 7.5 0 0 1-2 1.2l-.4 2.5h-3.9l-.4-2.5a7.5 7.5 0 0 1-2-1.2l-2.3 1-2-3.4 2-1.5A7.5 7.5 0 0 1 4.5 12z"/></svg>Ajustes</button>
+</nav>
+
+<div class="sheet" id="sheetSubj" onclick="if(event.target===this)closeSheet('sheetSubj')">
+  <div class="panel">
+    <h3 id="subjTitle">Nova matéria</h3>
+    <label for="sName">Nome</label>
+    <input id="sName" placeholder="Ex.: Eletromagnetismo">
+    <label>Cor</label>
+    <div class="swatches" id="swatches"></div>
+    <label>Dias de aula e nº de aulas em cada dia</label>
+    <div class="days" id="daysGrid"></div>
+    <label for="sTotal">Total de aulas no semestre (opcional)</label>
+    <input type="number" id="sTotal" min="0" placeholder="vazio = calcular pelas datas">
+    <div class="tiny muted" style="margin-top:5px">Preencha só se a secretaria já informou o total exato de aulas.</div>
+    <div class="row" style="gap:8px;margin-top:16px">
+      <button class="primary" style="flex:1" onclick="saveSubject()">Salvar</button>
+      <button class="ghost" onclick="closeSheet('sheetSubj')">Cancelar</button>
+    </div>
+    <button class="danger" id="delSubj" style="width:100%;margin-top:8px" onclick="deleteSubject()">Excluir matéria</button>
+  </div>
+</div>
+
+<div class="sheet" id="sheetAbs" onclick="if(event.target===this)closeSheet('sheetAbs')">
+  <div class="panel">
+    <h3>Registrar falta</h3>
+    <label for="aSubj">Matéria</label>
+    <select id="aSubj" onchange="syncAbsCount()"></select>
+    <div class="grid2">
+      <div><label for="aDate">Data</label><input type="date" id="aDate" onchange="syncAbsCount()"></div>
+      <div><label for="aCount">Aulas perdidas</label><input type="number" id="aCount" min="1" step="1" value="1"></div>
+    </div>
+    <label for="aNote">Observação (opcional)</label>
+    <input id="aNote" placeholder="Ex.: consulta médica">
+    <div id="absWarn"></div>
+    <div class="row" style="gap:8px;margin-top:16px">
+      <button class="primary" style="flex:1" onclick="saveAbsence()">Registrar</button>
+      <button class="ghost" onclick="closeSheet('sheetAbs')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var KEY='frequencia_v1';
+var WD=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+var WD3=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+var COLORS=['#3b6ef5','#e0563f','#1f9d5b','#a256d6','#d98518','#12a3ad','#d6437f','#7a8595'];
+
+/* ---------- estado ---------- */
+function blank(){
+  var t=new Date(), e=new Date(t.getTime()+18*7*864e5);
+  return {version:1, config:{start:iso(t), end:iso(e), min:70},
+          subjects:[], absences:[], holidays:[], deleted:{}, updatedAt:0};
+}
+function normalize(r){
+  var b=blank();
+  return {version:1,
+          config:r.config||b.config,
+          subjects:Array.isArray(r.subjects)?r.subjects:[],
+          absences:Array.isArray(r.absences)?r.absences:[],
+          holidays:Array.isArray(r.holidays)?r.holidays:[],
+          deleted:(r.deleted&&typeof r.deleted==='object')?r.deleted:{},
+          updatedAt:r.updatedAt||0};
+}
+function load(){
+  try{
+    var r=JSON.parse(localStorage.getItem(KEY));
+    if(r && Array.isArray(r.subjects)) return normalize(r);
+  }catch(e){}
+  return blank();
+}
+var db=load();
+function persist(){
+  try{ localStorage.setItem(KEY,JSON.stringify(db)); }
+  catch(e){ alert('Não foi possível salvar neste navegador (modo privado?).'); }
+  render();
+}
+function save(){
+  db.updatedAt=Date.now();
+  persist();
+  schedulePush();
+}
+/* marca um id como apagado, para que a exclusão se propague no merge */
+function tomb(id){ db.deleted[id]=Date.now(); }
+
+/* une dois estados: nada registrado em um aparelho se perde por causa do outro */
+function merge(a,b){
+  var deleted={}, k;
+  for(k in (a.deleted||{})) deleted[k]=a.deleted[k];
+  for(k in (b.deleted||{})) deleted[k]=Math.max(deleted[k]||0,b.deleted[k]);
+  var newer=(b.updatedAt||0)>(a.updatedAt||0)? b : a;
+  var older=(newer===b)? a : b;
+  function union(key){
+    var map={}, out=[];
+    older[key].forEach(function(x){ map[x.id]=x; });
+    newer[key].forEach(function(x){ map[x.id]=x; });   // em empate, vence o estado mais recente
+    for(var id in map){ if(!deleted[id]) out.push(map[id]); }
+    out.sort(function(x,y){ return x.id<y.id? -1 : x.id>y.id? 1 : 0; }); // ordem estável entre aparelhos
+    return out;
+  }
+  var hol={};
+  (a.holidays||[]).concat(b.holidays||[]).forEach(function(h){ if(!deleted['hol:'+h]) hol[h]=1; });
+  /* aplica as exclusões ANTES de podar, senão um item apagado há muito tempo ressuscita aqui */
+  var subjects=union('subjects'), absences=union('absences'), holidays=Object.keys(hol).sort();
+  /* só então descarta lápides com mais de 180 dias, para o arquivo não crescer sem fim */
+  var kept={}, cut=Date.now()-180*864e5;
+  for(k in deleted){ if(deleted[k]>=cut) kept[k]=deleted[k]; }
+  return {version:1, config:newer.config, subjects:subjects, absences:absences,
+          holidays:holidays, deleted:kept,
+          updatedAt:Math.max(a.updatedAt||0,b.updatedAt||0)};
+}
+function uid(){ return Math.random().toString(36).slice(2,9); }
+function esc(s){ return String(s).replace(/[&<>"']/g,function(m){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]; }); }
+
+/* ---------- datas ---------- */
+function iso(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function parseD(s){ var p=s.split('-'); return new Date(+p[0],+p[1]-1,+p[2]); }
+function today(){ return iso(new Date()); }
+function fmt(s){ var d=parseD(s); return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'); }
+
+function eachDay(fn){
+  var c=db.config;
+  if(!c.start||!c.end) return;
+  var d=parseD(c.start), end=parseD(c.end), guard=0;
+  while(d<=end && guard++<3000){
+    var s=iso(d);
+    if(db.holidays.indexOf(s)===-1) fn(s, d.getDay());
+    d=new Date(d.getFullYear(), d.getMonth(), d.getDate()+1);
+  }
+}
+
+/* ---------- contas ---------- */
+function totals(s){
+  var total=0, held=0, t=today();
+  eachDay(function(day,wd){
+    var a=s.schedule[wd];
+    if(!a) return;
+    total+=a;
+    if(day<=t) held+=a;
+  });
+  if(s.manualTotal){
+    var r=s.manualTotal/(total||1);
+    total=s.manualTotal;
+    held=Math.min(Math.round(held*r), total);
+  }
+  var missed=db.absences.filter(function(x){return x.subjectId===s.id;})
+                        .reduce(function(n,x){return n+x.count;},0);
+  var limit=Math.floor(total*(100-db.config.min)/100);
+  var pctNow= held? Math.round((held-missed)/held*1000)/10 : 100;
+  return {total:total, held:held, missed:missed, limit:limit,
+          left:limit-missed, pctNow:Math.max(0,pctNow)};
+}
+function status(t){
+  if(t.missed>t.limit) return ['b-bad','Reprovado por falta','var(--bad)'];
+  if(t.left<=0) return ['b-bad','No limite','var(--bad)'];
+  if(t.limit && t.left<=Math.max(1,Math.ceil(t.limit*0.25))) return ['b-warn','Atenção','var(--warn)'];
+  return ['b-ok','Tranquilo','var(--ok)'];
+}
+
+/* ---------- navegação ---------- */
+function go(v){
+  var secs=document.querySelectorAll('section');
+  for(var i=0;i<secs.length;i++) secs[i].classList.toggle('on', secs[i].id==='v-'+v);
+  var btns=document.querySelectorAll('nav button');
+  for(var j=0;j<btns.length;j++) btns[j].classList.toggle('on', btns[j].dataset.v===v);
+  window.scrollTo(0,0);
+}
+function closeSheet(id){ document.getElementById(id).classList.remove('on'); }
+
+/* ---------- render ---------- */
+function render(){
+  var c=db.config;
+  document.getElementById('semInfo').textContent =
+    (c.start&&c.end) ? fmt(c.start)+' — '+fmt(c.end)+' · mín. '+c.min+'%' : 'configure o semestre';
+
+  var p=document.getElementById('painel');
+  if(!db.subjects.length){
+    p.innerHTML='<div class="card"><div class="empty">Nenhuma matéria cadastrada.<br><br>'+
+      '<button class="primary" onclick="go(\'materias\');openSubject()">Cadastrar primeira matéria</button></div></div>';
+    document.getElementById('globalLeft').textContent='';
+  }else{
+    var worst=Infinity;
+    p.innerHTML=db.subjects.map(function(s){
+      var t=totals(s), st=status(t);
+      if(t.left<worst) worst=t.left;
+      var used=t.limit? Math.min(100,t.missed/t.limit*100):(t.missed?100:0);
+      return '<div class="card subj" style="--dot:'+s.color+'">'+
+        '<div class="top"><div class="name">'+esc(s.name)+'</div>'+
+          '<span class="badge '+st[0]+'">'+st[1]+'</span></div>'+
+        '<div class="row between" style="margin-top:8px;align-items:flex-end">'+
+          '<div><div class="big" style="color:'+st[2]+'">'+Math.max(0,t.left)+'</div>'+
+            '<div class="tiny muted">aula'+(t.left===1?'':'s')+' que ainda pode perder</div></div>'+
+          '<button class="mini" onclick="openAbsence(\''+s.id+'\')">+ falta</button>'+
+        '</div>'+
+        '<div class="bar"><i style="width:'+used+'%;background:'+st[2]+'"></i></div>'+
+        '<div class="stats small">'+
+          '<div class="stat"><b>'+t.missed+' / '+t.limit+'</b><span>faltas / limite</span></div>'+
+          '<div class="stat"><b>'+t.pctNow+'%</b><span>presença até hoje</span></div>'+
+          '<div class="stat"><b>'+t.held+' / '+t.total+'</b><span>aulas dadas</span></div>'+
+        '</div></div>';
+    }).join('');
+    document.getElementById('globalLeft').innerHTML= isFinite(worst)?
+      '<span style="font-size:12px;font-weight:500;color:var(--muted)">margem</span> '+Math.max(0,worst) : '';
+  }
+
+  document.getElementById('subjList').innerHTML = db.subjects.length? db.subjects.map(function(s){
+    var days=Object.keys(s.schedule).map(function(k){return WD3[k]+' ('+s.schedule[k]+')';}).join(', ')||'sem dias definidos';
+    return '<div class="item"><div class="row" style="gap:9px;min-width:0">'+
+      '<span class="dot" style="background:'+s.color+'"></span>'+
+      '<div style="min-width:0"><div style="font-weight:600">'+esc(s.name)+'</div>'+
+      '<div class="tiny muted">'+days+'</div></div></div>'+
+      '<button class="mini ghost" onclick="openSubject(\''+s.id+'\')">Editar</button></div>';
+  }).join('') : '<div class="empty">Nenhuma matéria ainda.</div>';
+
+  document.getElementById('holList').innerHTML = db.holidays.length?
+    db.holidays.slice().sort().map(function(h){
+      return '<div class="item"><div>'+fmt(h)+' <span class="tiny muted">'+WD[parseD(h).getDay()]+'</span></div>'+
+        '<button class="mini ghost danger" onclick="delHoliday(\''+h+'\')">Remover</button></div>';
+    }).join('') : '<div class="empty small">Nenhum feriado cadastrado.</div>';
+
+  var h=db.absences.slice().sort(function(a,b){return b.date.localeCompare(a.date);});
+  document.getElementById('histList').innerHTML = h.length? h.map(function(a){
+    var s=db.subjects.filter(function(x){return x.id===a.subjectId;})[0];
+    return '<div class="item"><div class="row" style="gap:9px;min-width:0">'+
+      '<span class="dot" style="background:'+(s?s.color:'#888')+'"></span><div style="min-width:0">'+
+      '<div style="font-weight:600">'+esc(s?s.name:'(matéria removida)')+'</div>'+
+      '<div class="tiny muted">'+fmt(a.date)+' · '+WD3[parseD(a.date).getDay()]+' · '+a.count+' aula'+(a.count>1?'s':'')+
+      (a.note?' · '+esc(a.note):'')+'</div></div></div>'+
+      '<button class="mini ghost danger" onclick="delAbsence(\''+a.id+'\')">×</button></div>';
+  }).join('') : '<div class="empty">Nenhuma falta registrada. 🎉</div>';
+
+  document.getElementById('cStart').value=c.start||'';
+  document.getElementById('cEnd').value=c.end||'';
+  document.getElementById('cMin').value=c.min;
+}
+
+/* ---------- matérias ---------- */
+var editing=null;
+function openSubject(id){
+  editing = id? db.subjects.filter(function(s){return s.id===id;})[0] : null;
+  document.getElementById('subjTitle').textContent = editing? 'Editar matéria':'Nova matéria';
+  document.getElementById('sName').value = editing? editing.name : '';
+  document.getElementById('sTotal').value = (editing&&editing.manualTotal)? editing.manualTotal : '';
+  document.getElementById('delSubj').style.display = editing? 'block':'none';
+
+  var cur = editing? editing.color : COLORS[db.subjects.length%COLORS.length];
+  document.getElementById('swatches').innerHTML = COLORS.map(function(c){
+    return '<div class="sw'+(c===cur?' on':'')+'" style="background:'+c+'" data-c="'+c+'" onclick="pickColor(this)"></div>';
+  }).join('');
+
+  var sch = editing? editing.schedule : {};
+  document.getElementById('daysGrid').innerHTML = [1,2,3,4,5,6,0].map(function(w){
+    var on = sch[w]!==undefined;
+    return '<div class="day'+(on?' on':'')+'" data-w="'+w+'">'+
+      '<div class="hd"><input type="checkbox" '+(on?'checked':'')+' onchange="toggleDay(this)"> '+WD3[w]+'</div>'+
+      '<input type="number" min="1" step="1" value="'+(on?sch[w]:2)+'" '+(on?'':'disabled')+'></div>';
+  }).join('');
+  document.getElementById('sheetSubj').classList.add('on');
+}
+function pickColor(el){
+  var sw=document.querySelectorAll('#swatches .sw');
+  for(var i=0;i<sw.length;i++) sw[i].classList.remove('on');
+  el.classList.add('on');
+}
+function toggleDay(cb){
+  var box=cb.closest('.day'), n=box.querySelector('input[type=number]');
+  box.classList.toggle('on',cb.checked);
+  n.disabled=!cb.checked;
+}
+function saveSubject(){
+  var name=document.getElementById('sName').value.trim();
+  if(!name){ alert('Dê um nome para a matéria.'); return; }
+  var schedule={};
+  var days=document.querySelectorAll('#daysGrid .day');
+  for(var i=0;i<days.length;i++){
+    if(days[i].querySelector('input[type=checkbox]').checked)
+      schedule[+days[i].dataset.w]=Math.max(1,+days[i].querySelector('input[type=number]').value||1);
+  }
+  var swOn=document.querySelector('#swatches .sw.on');
+  var color= swOn? swOn.dataset.c : COLORS[0];
+  var mt=+document.getElementById('sTotal').value||null;
+  if(editing){
+    editing.name=name; editing.schedule=schedule; editing.color=color; editing.manualTotal=mt;
+  }else{
+    db.subjects.push({id:uid(),name:name,schedule:schedule,color:color,manualTotal:mt});
+  }
+  closeSheet('sheetSubj'); save();
+}
+function deleteSubject(){
+  if(!editing) return;
+  if(!confirm('Excluir "'+editing.name+'" e todas as faltas dela?')) return;
+  var gone=editing.id;
+  db.absences.forEach(function(a){ if(a.subjectId===gone) tomb(a.id); });
+  tomb(gone);
+  db.absences=db.absences.filter(function(a){return a.subjectId!==gone;});
+  db.subjects=db.subjects.filter(function(s){return s.id!==gone;});
+  closeSheet('sheetSubj'); save();
+}
+
+/* ---------- faltas ---------- */
+function openAbsence(id){
+  if(!db.subjects.length){ alert('Cadastre uma matéria primeiro.'); go('materias'); return; }
+  document.getElementById('aSubj').innerHTML=db.subjects.map(function(s){
+    return '<option value="'+s.id+'"'+(s.id===id?' selected':'')+'>'+esc(s.name)+'</option>';
+  }).join('');
+  document.getElementById('aDate').value=today();
+  document.getElementById('aNote').value='';
+  syncAbsCount();
+  document.getElementById('sheetAbs').classList.add('on');
+}
+function syncAbsCount(){
+  var s=db.subjects.filter(function(x){return x.id===document.getElementById('aSubj').value;})[0];
+  var d=document.getElementById('aDate').value;
+  var w=d? parseD(d).getDay() : -1;
+  var n=s&&s.schedule[w];
+  document.getElementById('aCount').value=n||1;
+  document.getElementById('absWarn').innerHTML=(d&&s&&!n)?
+    '<div class="warnbox">Atenção: '+WD[w]+' não é dia de aula de '+esc(s.name)+'. Confira a data.</div>':'';
+}
+function saveAbsence(){
+  var subjectId=document.getElementById('aSubj').value;
+  var date=document.getElementById('aDate').value;
+  var count=Math.max(1,+document.getElementById('aCount').value||1);
+  if(!date){ alert('Escolha a data.'); return; }
+  db.absences.push({id:uid(),subjectId:subjectId,date:date,count:count,
+                    note:document.getElementById('aNote').value.trim()});
+  closeSheet('sheetAbs'); save();
+}
+function delAbsence(id){
+  tomb(id);
+  db.absences=db.absences.filter(function(a){return a.id!==id;});
+  save();
+}
+
+/* ---------- config ---------- */
+function saveConfig(){
+  var s=document.getElementById('cStart').value, e=document.getElementById('cEnd').value;
+  if(s&&e&&e<s){ alert('O fim do semestre não pode ser antes do início.'); return; }
+  db.config={start:s, end:e, min:Math.min(100,Math.max(1,+document.getElementById('cMin').value||70))};
+  save();
+  alert('Semestre salvo.');
+}
+function addHoliday(){
+  var d=document.getElementById('hDate').value;
+  if(!d) return;
+  delete db.deleted['hol:'+d];   // readicionar anula a lápide anterior
+  if(db.holidays.indexOf(d)===-1) db.holidays.push(d);
+  document.getElementById('hDate').value='';
+  save();
+}
+function delHoliday(d){
+  tomb('hol:'+d);
+  db.holidays=db.holidays.filter(function(x){return x!==d;});
+  save();
+}
+
+/* ---------- backup ---------- */
+function exportJSON(){
+  var blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='frequencia-'+today()+'.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); },1000);
+}
+function copyJSON(){
+  var t=JSON.stringify(db);
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(t).then(function(){ alert('Backup copiado.'); },
+      function(){ document.getElementById('pasteBox').value=t; alert('Copie o texto da caixa em Ajustes.'); });
+  }else{
+    document.getElementById('pasteBox').value=t;
+    alert('Copie o texto da caixa em Ajustes.');
+  }
+}
+function applyImport(txt){
+  var r;
+  try{ r=JSON.parse(txt); }catch(e){ alert('Arquivo inválido.'); return; }
+  if(!r||!Array.isArray(r.subjects)){ alert('Arquivo inválido.'); return; }
+  if(!confirm('Substituir os dados atuais pelo backup?')) return;
+  db=normalize(r);
+  save(); go('painel'); alert('Backup importado.');
+}
+function importPaste(){ applyImport(document.getElementById('pasteBox').value); }
+document.getElementById('fileIn').addEventListener('change',function(ev){
+  var f=ev.target.files[0];
+  if(!f) return;
+  var r=new FileReader();
+  r.onload=function(){ applyImport(r.result); };
+  r.readAsText(f);
+  ev.target.value='';
+});
+function wipe(){
+  if(!confirm('Apagar TODAS as matérias e faltas? Isso não tem volta.')) return;
+  db=blank(); save(); go('painel');
+}
+
+/* ---------- sincronização via Gist ---------- */
+var SKEY='frequencia_sync', FILE='frequencia.json', API='https://api.github.com/gists';
+var sync={token:'', gist:''};
+try{ sync=Object.assign(sync, JSON.parse(localStorage.getItem(SKEY))||{}); }catch(e){}
+var pushTimer=null, busy=false, lastState='';
+
+function on(){ return !!(sync.token && sync.gist); }
+function setState(kind,msg){
+  lastState=msg;
+  var colors={ok:'var(--ok)',work:'var(--muted)',err:'var(--bad)',off:'var(--muted)'};
+  var pill=document.getElementById('syncPill');
+  pill.textContent = on()? msg : '';
+  pill.style.color = colors[kind]||'var(--muted)';
+  var box=document.getElementById('syncStatus');
+  box.innerHTML = on()
+    ? '<span style="color:'+(colors[kind]||'')+'">●</span> '+esc(msg)+' <span class="muted">· gist '+esc(sync.gist.slice(0,8))+'…</span>'
+    : '<span class="muted">Não conectado — os dados ficam só neste aparelho.</span>';
+}
+function api(path,opts){
+  opts=opts||{};
+  opts.headers=Object.assign({
+    'Authorization':'Bearer '+sync.token,
+    'Accept':'application/vnd.github+json',
+    'X-GitHub-Api-Version':'2022-11-28'
+  }, opts.headers||{});
+  return fetch(API+path,opts).then(function(r){
+    if(r.status===401) throw new Error('token inválido ou revogado');
+    if(r.status===404) throw new Error('gist não encontrado');
+    if(!r.ok) throw new Error('GitHub respondeu '+r.status);
+    return r.json();
+  });
+}
+function readGist(){
+  return api('/'+sync.gist,{cache:'no-store'}).then(function(g){
+    var f=g.files&&g.files[FILE];
+    if(!f) return null;
+    if(f.truncated && f.raw_url) return fetch(f.raw_url).then(function(r){return r.text();}).then(JSON.parse);
+    return JSON.parse(f.content);
+  });
+}
+function writeGist(state){
+  var files={}; files[FILE]={content:JSON.stringify(state,null,2)};
+  return api('/'+sync.gist,{method:'PATCH',headers:{'Content-Type':'application/json'},
+                            body:JSON.stringify({files:files})});
+}
+
+/* lê a nuvem, funde com o local e devolve o resultado para os dois lados */
+function syncNow(manual){
+  if(!on()){ if(manual) alert('Conecte um token e um gist primeiro.'); setState('off',''); return Promise.resolve(); }
+  if(busy) return Promise.resolve();
+  busy=true; setState('work','sincronizando…');
+  return readGist().then(function(remote){
+    var merged = remote? merge(db, normalize(remote)) : db;
+    var changedHere = JSON.stringify(merged)!==JSON.stringify(db);
+    var changedThere = !remote || JSON.stringify(merged)!==JSON.stringify(normalize(remote));
+    if(changedHere){ db=merged; persist(); }
+    return changedThere? writeGist(merged) : null;
+  }).then(function(){
+    busy=false; setState('ok','sincronizado '+new Date().toTimeString().slice(0,5));
+  }).catch(function(e){
+    busy=false; setState('err','erro: '+e.message);
+    if(manual) alert('Falha ao sincronizar: '+e.message);
+  });
+}
+function schedulePush(){
+  if(!on()) return;
+  clearTimeout(pushTimer);
+  setState('work','alterações pendentes…');
+  pushTimer=setTimeout(function(){ syncNow(false); },1500);
+}
+function createGist(){
+  var t=document.getElementById('gToken').value.trim();
+  if(!t){ alert('Cole o token primeiro.'); return; }
+  sync.token=t;
+  var files={}; files[FILE]={content:JSON.stringify(db,null,2)};
+  fetch(API,{method:'POST',headers:{'Authorization':'Bearer '+t,
+      'Accept':'application/vnd.github+json','Content-Type':'application/json'},
+      body:JSON.stringify({description:'Frequência — controle de faltas',public:false,files:files})})
+   .then(function(r){ if(!r.ok) throw new Error('GitHub respondeu '+r.status); return r.json(); })
+   .then(function(g){
+      document.getElementById('gGist').value=g.id;
+      alert('Gist criado. Clique em Conectar.\n\nGuarde este ID para usar nos outros aparelhos:\n'+g.id);
+   })
+   .catch(function(e){ alert('Não deu para criar o gist: '+e.message+'\nConfira se o token tem o escopo "gist".'); });
+}
+function saveSync(){
+  sync.token=document.getElementById('gToken').value.trim();
+  sync.gist=document.getElementById('gGist').value.trim();
+  if(!sync.token || !sync.gist){ alert('Preencha o token e o ID do gist.'); return; }
+  localStorage.setItem(SKEY,JSON.stringify(sync));
+  syncNow(true).then(function(){ if(lastState.indexOf('erro')<0) alert('Conectado.'); });
+}
+function disconnectSync(){
+  if(!confirm('Desconectar este aparelho? Os dados locais continuam aqui e o gist não é apagado.')) return;
+  sync={token:'',gist:''};
+  localStorage.removeItem(SKEY);
+  document.getElementById('gToken').value='';
+  document.getElementById('gGist').value='';
+  setState('off','');
+}
+
+render();
+document.getElementById('gToken').value=sync.token;
+document.getElementById('gGist').value=sync.gist;
+setState('off','');
+if(on()) syncNow(false);
+/* ao voltar para a aba/app, puxa o que o outro aparelho registrou */
+document.addEventListener('visibilitychange',function(){
+  if(!document.hidden && on()) syncNow(false);
+});
+</script>
+</body>
+</html>
