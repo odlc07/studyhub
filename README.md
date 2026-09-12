@@ -1,4 +1,4 @@
-# StudyHub
+# frequency
 
 Ferramentas da faculdade, em páginas estáticas hospedadas no GitHub Pages.
 Sem build, sem dependências, sem servidor — cada ferramenta é um `index.html` na
